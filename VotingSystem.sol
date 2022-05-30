@@ -7,7 +7,7 @@ contract Ballot {
     // Variables
     struct vote {
         address voterAddress;
-        uint choice;
+        bool choice;
     }
 
     struct voter {
@@ -71,11 +71,26 @@ contract Ballot {
         state = State.Voting;
     }
 
-    function castVote(uint _choice) public inState(State.Voting) returns (bool voted){
-
+    function castVote(bool _choice) public inState(State.Voting) returns (bool voted){
+        bool found = false;
+        // check if voter exists in system
+        if (bytes(voterRegistry[msg.sender].voterName).length!=0&&!voterRegistry[msg.sender].voted){
+            voterRegistry[msg.sender].voted = true;
+            vote memory v;
+            v.voterAddress = msg.sender;
+            v.choice = _choice;
+            if(_choice){
+                countResult++;
+            }
+            votes[totalVotes] = v;
+            totalVotes++;
+            found = true;
+        }
+        return found;
     }
 
-    function endVote() {
-
+    function endVote() public inState(State.Voting) onlyOfficial {
+        state = State.Ended;
+        finalResult = countResult;
     }
 }
